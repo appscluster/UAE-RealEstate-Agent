@@ -1,4 +1,4 @@
-# D: UAE Real Estate Deal Readiness Agent
+# D: UAE Real Estate Deal Readiness Agent Team
 
 Project brief. Research checked on 7 November 2026, Asia/Dubai (UTC+4). Status: planning only. No application has been built or deployed.
 
@@ -12,6 +12,67 @@ The demo should ask whether project identity, developer, escrow instructions and
 
 Emaar, Modon and Aldar are examples of developer document families that a future customer might use, not partners or endorsed data providers. Developer branding does not determine jurisdiction. DLD and RERA rules are Dubai specific. Abu Dhabi projects require a separately reviewed regulatory pack before supporting Modon or Aldar transactions there. Do not apply Dubai checklists across the UAE.
 
+## Why this needs a team of agents
+
+A buyer's due diligence covers separate areas that need different evidence: the permit and broker status, the price, the full cost of ownership, and off plan delivery risk. A single agent tends to answer each question in isolation and miss conflicts between them, for example a price that looks fair for a project that has stalled. Parallel specialists each own one area, a Critic looks specifically for contradictions across their findings, and a human approver decides before any offer or summary reaches a buyer.
+
+The design extends the Planner, Operator and Checker pattern already used in Hermes and in the DataRobot Demo: the planner assigns the specialists, the specialists operate, and the Critic is the checker. The UAE Tax and eInvoicing team is the recommended primary demo. This team is the secondary option.
+
+## Agent team
+
+| Agent | Role | Inputs | Outputs | Tools |
+|---|---|---|---|---|
+| Planner | Builds the due diligence checklist and assigns specialists | Deal file, project and unit IDs | Work items per specialist, run state, SSE progress events | LangGraph state, audit log |
+| Permit Verifier | Checks the listing, project, developer and broker against DLD and RERA evidence | Brochure, SPA extract, simulated official verification records | Verified, mismatch or "to verify" per item, with citations | Versioned retrieval, deterministic ID comparison, manual links to official services |
+| Valuation Analyst | Prices the unit against DLD transaction comparables | Unit details, synthetic comparable transactions | Price range with the comparables used | Deterministic comparison over a seeded synthetic comparables table |
+| Cost Modeller | Works out DLD fee, agency fee, mortgage and payment plan | Price, payment schedule, financing assumptions | Itemised cost schedule with stated assumptions | Deterministic arithmetic, reviewer approved fee assumptions |
+| Off plan Risk Analyst | Assesses project status and escrow position | Project status record, escrow details, SPA handover clause | Delivery and escrow risk notes with citations | Versioned retrieval, beneficiary reference comparison |
+| Critic | Looks for conflicts between the specialists' findings | All specialist outputs | Conflicts raised, sent back for one repair or escalated | Independent model call, cross finding rules |
+| Deal Writer | Drafts the offer or deal readiness summary | Critic approved findings | Draft summary with every claim cited | Template, citation checker |
+| Human approver | Manager or conveyancing professional who decides | Draft, conflicts, open questions | Approve, reject or escalate, recorded in the audit trail | Approval UI |
+
+### Orchestration flow and handoffs
+
+1. The Planner builds the checklist and dispatches the four specialists in parallel.
+2. The Permit Verifier, Valuation Analyst, Cost Modeller and Off plan Risk Analyst each return cited findings.
+3. The Critic compares the findings. A conflict goes back to the relevant specialist for one repair, then escalates if unresolved.
+4. The Deal Writer drafts only from findings the Critic has passed, carrying open conflicts forward as explicit warnings.
+5. The Human approver decides. Nothing is sent to a buyer in the demo, and nothing leaves the system without approval.
+
+```mermaid
+flowchart TD
+    Deal[Synthetic deal file] --> Plan[Planner]
+    Plan --> PV[Permit Verifier DLD and RERA]
+    Plan --> VA[Valuation Analyst DLD comps]
+    Plan --> CM[Cost Modeller fees mortgage payment plan]
+    Plan --> OR[Off plan Risk Analyst status and escrow]
+    PV --> Critic[Critic cross checks findings]
+    VA --> Critic
+    CM --> Critic
+    OR --> Critic
+    Critic -->|Conflict, one repair| Plan
+    Critic -->|Unresolved| Esc[Escalate as to verify]
+    Critic -->|Consistent| DW[Deal Writer]
+    Esc --> DW
+    DW --> Gate{Human approver}
+    Gate -->|Approve| Out[Approved summary, nothing sent to buyer in demo]
+    Gate -->|Reject or escalate| Log[(Decision audit)]
+    Out --> Log
+```
+
+### Scripted demo moment: one agent catches another
+
+The Valuation Analyst reports that the synthetic Canal Courtyard unit is priced within the range of seeded comparables. Independently, the Off plan Risk Analyst finds that the simulated project status record shows construction has stalled. Each finding looks reasonable alone. The Critic flags the conflict: comparables for a progressing project do not support a fair price for a stalled one. The Deal Writer is blocked from calling the price fair, and the conflict goes to the human approver as a named warning.
+
+### Rubric mapping
+
+| Criterion | How the team design addresses it |
+|---|---|
+| Problem Solving Acumen | Due diligence decomposed into independent areas, each owned by a specialist with its own evidence |
+| Strategic Vision | Brokerage workflow that can extend to more jurisdictions through separately reviewed regulatory packs |
+| Technical Credibility | Functional parallel multi agent workflow, deterministic checks, Critic loop, human gate and audit trail |
+| Creativity and Passion | Visible moment where the Critic catches a conflict no single specialist could see |
+
 ## Target users and business value
 
 Primary users are Dubai brokerage team leads, transaction coordinators and new brokers. A qualified manager or conveyancing professional approves deal summaries. Clients receive only a reviewed export, never an unapproved agent response.
@@ -20,12 +81,12 @@ Value hypotheses are faster evidence assembly, fewer inconsistent answers, clear
 
 ## Live demo storyline: 6 minutes
 
-1. Minute 0 to 1: choose fictional Dubai brokerage Sandstone Realty and synthetic project Canal Courtyard. Show that the project, developer, unit and deal are invented.
-2. Minute 1 to 2: upload a synthetic brochure, SPA extract, payment schedule and clearly labelled simulated official verification record. The planner builds a checklist and links evidence by project and unit ID.
-3. Minute 2 to 3: ask whether the handover date is guaranteed. The brochure promises one date while the SPA states a conditional date. Display both citations and escalate the conflict instead of inventing a resolution.
-4. Minute 3 to 4: a deterministic comparison spots different beneficiary references between two synthetic documents. The agent recommends official verification and human review. It cannot approve a payment or certify escrow validity.
+1. Minute 0 to 1: choose fictional Dubai brokerage Sandstone Realty and synthetic project Canal Courtyard. Show that the project, developer, unit and deal are invented, and introduce the agent team on screen.
+2. Minute 1 to 2: upload a synthetic brochure, SPA extract, payment schedule and clearly labelled simulated official verification record. The Planner builds a checklist and dispatches the four specialists in parallel, visible in the SSE trace.
+3. Minute 2 to 3: the Off plan Risk Analyst finds the brochure promises one handover date while the SPA states a conditional date. Both citations are shown and the conflict is escalated instead of resolved by invention.
+4. Minute 3 to 4: the Valuation Analyst calls the price fair against comparables, while the project status record shows a stall. The Critic flags the conflict and blocks the Deal Writer from calling the price fair. The Permit Verifier also spots different beneficiary references between two synthetic documents and recommends official verification. No agent can approve a payment or certify escrow validity.
 5. Minute 4 to 5: ask in Arabic whether a Dubai checklist can validate an Abu Dhabi Aldar transaction. The guard refuses jurisdictional overreach and explains the missing source pack. Show a manual link to the official verification service without claiming it was queried.
-6. Minute 5 to 6: a manager approves a limited missing evidence report. A new broker answers three cited quiz questions and sees the clause behind a wrong answer. No message is sent to a buyer.
+6. Minute 5 to 6: the Deal Writer produces a draft with warnings, and a manager approves a limited missing evidence report. A new broker answers three cited quiz questions and sees the clause behind a wrong answer. No message is sent to a buyer.
 
 ## MVP versus later
 
@@ -66,25 +127,31 @@ This is a proposed application, not a working product yet. Build code first with
 ```mermaid
 flowchart TD
     UI[Arabic and English React UI] --> API[FastAPI and SSE]
-    API --> Guard[Scope and tenant guard]
+    API --> Guard[Scope tenant and jurisdiction guard]
     Guard --> Ingest[Parse uploads and quarantine instructions]
     Ingest --> Store[(SQLite documents chunks graph and audit)]
-    Store --> Plan[LangGraph planner]
-    Plan --> Operator[Operator selects allowed tools]
-    Operator --> Retrieve[Versioned retrieval with page citations]
-    Operator --> Rules[Deterministic domain rules and arithmetic]
-    Retrieve --> Check[Checker validates claims citations dates and scope]
-    Rules --> Check
-    Check -->|Unsupported or conflict| Escalate[Abstain and request expert review]
-    Check -->|Repair once| Operator
-    Check -->|Evidence sufficient| Human[Human review checkpoint]
-    Escalate --> Human
-    Human -->|Approve| Report[Save approved report and learning cards]
+    Store --> Plan[Planner: LangGraph]
+    Plan --> PV[Permit Verifier]
+    Plan --> VA[Valuation Analyst]
+    Plan --> CM[Cost Modeller]
+    Plan --> OR[Off plan Risk Analyst]
+    PV --> Critic[Critic validates claims citations and cross finding conflicts]
+    VA --> Critic
+    CM --> Critic
+    OR --> Critic
+    Critic -->|Repair once| Plan
+    Critic -->|Unsupported or conflict| Escalate[Abstain and request expert review]
+    Critic -->|Evidence sufficient| DW[Deal Writer]
+    Escalate --> DW
+    DW --> Human[Human review checkpoint]
+    Human -->|Approve| Report[Save approved report and quiz]
     Human -->|Reject| Audit[(Decision audit)]
     Human -->|Escalate| Audit
     Report --> Audit
     Report --> UI
 ```
+
+Each agent is a LangGraph node with its own prompt, allowed tools and output schema. The Planner plans, the four specialists and the Deal Writer operate, and the Critic is the checker.
 
 The checker must validate source entailment, not merely the presence of a citation. A second model alone is not proof. Numeric comparisons and required field checks run as deterministic code. Bound repair to one attempt, then abstain. Uploads are untrusted data and cannot grant tools or override system instructions. Approval requires a completed run whose checker passed and whose document version has not changed. Reject cross tenant access before retrieval.
 
