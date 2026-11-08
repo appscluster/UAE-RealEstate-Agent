@@ -81,12 +81,12 @@ Value hypotheses are faster evidence assembly, fewer inconsistent answers, clear
 
 ## Live demo storyline: 6 minutes
 
-1. Minute 0 to 1: choose fictional Dubai brokerage Sandstone Realty and synthetic project Canal Courtyard. Show that the project, developer, unit and deal are invented, and introduce the agent team on screen.
+1. Minute 0 to 1: choose fictional Dubai brokerage Sandstone Realty and synthetic project Canal Courtyard. Show that the project, developer, unit and deal are invented, and introduce the agent team on screen. A synthetic buyer question arrives through the Omni messaging harness.
 2. Minute 1 to 2: upload a synthetic brochure, SPA extract, payment schedule and clearly labelled simulated official verification record. The Planner builds a checklist and dispatches the four specialists in parallel, visible in the SSE trace.
 3. Minute 2 to 3: the Off plan Risk Analyst finds the brochure promises one handover date while the SPA states a conditional date. Both citations are shown and the conflict is escalated instead of resolved by invention.
 4. Minute 3 to 4: the Valuation Analyst calls the price fair against comparables, while the project status record shows a stall. The Critic flags the conflict and blocks the Deal Writer from calling the price fair. The Permit Verifier also spots different beneficiary references between two synthetic documents and recommends official verification. No agent can approve a payment or certify escrow validity.
 5. Minute 4 to 5: ask in Arabic whether a Dubai checklist can validate an Abu Dhabi Aldar transaction. The guard refuses jurisdictional overreach and explains the missing source pack. Show a manual link to the official verification service without claiming it was queried.
-6. Minute 5 to 6: the Deal Writer produces a draft with warnings, and a manager approves a limited missing evidence report. A new broker answers three cited quiz questions and sees the clause behind a wrong answer. No message is sent to a buyer.
+6. Minute 5 to 6: the Deal Writer produces a draft with warnings, and a manager approves a limited missing evidence report. A new broker answers three cited quiz questions and sees the clause behind a wrong answer. The approved response is captured in the Omni harness with its audit link. No message is sent to a buyer.
 
 ## MVP versus later
 
@@ -126,6 +126,9 @@ This is a proposed application, not a working product yet. Build code first with
 
 ```mermaid
 flowchart TD
+    Chat[Synthetic messaging harness] --> Omni[Omni channel layer]
+    Omni --> Adapter[Authenticated tenant scoped FastAPI adapter]
+    Adapter --> API
     UI[Arabic and English React UI] --> API[FastAPI and SSE]
     API --> Guard[Scope tenant and jurisdiction guard]
     Guard --> Ingest[Parse uploads and quarantine instructions]
@@ -149,6 +152,8 @@ flowchart TD
     Human -->|Escalate| Audit
     Report --> Audit
     Report --> UI
+    Report --> Preview[Approved response preview, captured locally, not delivered]
+    Preview --> Omni
 ```
 
 Each agent is a LangGraph node with its own prompt, allowed tools and output schema. The Planner plans, the four specialists and the Deal Writer operate, and the Critic is the checker.
@@ -156,6 +161,20 @@ Each agent is a LangGraph node with its own prompt, allowed tools and output sch
 The checker must validate source entailment, not merely the presence of a citation. A second model alone is not proof. Numeric comparisons and required field checks run as deterministic code. Bound repair to one attempt, then abstain. Uploads are untrusted data and cannot grant tools or override system instructions. Approval requires a completed run whose checker passed and whose document version has not changed. Reject cross tenant access before retrieval.
 
 Use OmniRoute chat completions at `http://127.0.0.1:20128/v1`, with `gh/gpt-5.6-terra` as the primary model and `gh/gpt-5.6-luna` as a controlled fallback. Record the actual selected model and retry reason. `ollama/qwen3-coder:30b` is a local option whose Arabic and domain quality must be evaluated. Routing locally does not establish where an upstream provider processes data. Do not change Hermes or OmniRoute configuration.
+
+### Requirements: Omni messaging channel layer
+
+[Omni](https://github.com/automagik-dev/omni) is a required integration component for the planned messaging experience. It does not replace the LangGraph agent team or the OmniRoute model gateway. Omni is an Apache 2.0 licensed TypeScript omnichannel messaging platform for AI agents, built on Bun, Hono, PostgreSQL with Drizzle and NATS JetStream, with a REST and OpenAPI interface, a CLI and SDKs. It provides a unified messaging API, event routing, agent provider bindings and response gates. Its documented channels include WhatsApp through Baileys or Meta Cloud API, Discord, Slack and Telegram.
+
+How this project uses it: connect Omni to a dedicated FastAPI adapter through its webhook agent provider interface. Map each incoming conversation to an authenticated tenant and deal before invoking the Planner. Return only human approved output through the adapter. Preserve message IDs, run IDs, source versions and approval decisions for audit and duplicate delivery protection. Specialist agents never send messages directly.
+
+For the demo, replay synthetic conversations through a local testing channel or fixtures. Show an incoming fictional buyer question, the specialist handoffs, the Critic's warning and the Human approver's decision. Capture the proposed response locally without sending it to a buyer. Activating a production channel or any external delivery needs separate approval.
+
+Runtime requirements are Bun, PM2, PostgreSQL and NATS JetStream. Omni's documented installer manages local PostgreSQL and NATS and exposes its API on port 8882 by default. Keep Omni's PostgreSQL and messaging state separate from the application's SQLite document and audit storage. Use scoped API keys, authenticated webhooks, explicit tenant mapping and protected local service endpoints. This requirement does not authorise installing Omni or changing Hermes or OmniRoute.
+
+Maturity and licence: checked on 8 November 2026, Asia/Dubai, GitHub reported 60 stars, 20 forks, default branch `dev` and latest release v2.261108.2. The README version badge lags the releases, so pin a reviewed release and validate its channel and webhook contracts before implementation. Upstream channel status labels are not production assurance. Preserve Apache 2.0 licence and notice obligations and review transitive dependencies.
+
+Channel and privacy risks: prefer Meta Cloud API for any future approved WhatsApp deployment, subject to Meta business, consent, template and messaging policies. Baileys pairing is not official WhatsApp Business API authorisation and needs a separate terms and account risk review. Chats, contact identifiers, attachments, message logs and cross channel identity links can contain personal data. Apply the UAE PDPL controls in this brief to Omni storage and every channel provider, including processing location, retention, access and deletion. Use synthetic messages and fictional identifiers only in the demo.
 
 ### Reuse from DataRobot Demo
 
