@@ -1,0 +1,202 @@
+{
+  "deals": [
+    {
+      "deal_id": "deal_canal_courtyard",
+      "tenant_id": "tenant_sandstone",
+      "brokerage": "Sandstone Realty",
+      "project": "Canal Courtyard",
+      "developer": "Harbor and Stone",
+      "jurisdiction": "Dubai",
+      "unit_id": "CC-1408",
+      "asking_price_aed": 1850000,
+      "buyer_question": "Is unit CC-1408 ready for an offer?",
+      "documents": [
+        {
+          "id": "doc:brochure",
+          "title": "Brochure",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Canal Courtyard. Developer Harbor and Stone. Unit CC-1408. Dubai.",
+            "price": "Asking price 1850000 AED.",
+            "handover": "Handover June 2027.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE."
+          }
+        },
+        {
+          "id": "doc:spa",
+          "title": "SPA extract",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Canal Courtyard. Developer Harbor and Stone. Unit CC-1408.",
+            "handover": "Handover is conditional on a completion notice. No fixed date is stated.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE_B."
+          }
+        },
+        {
+          "id": "doc:schedule",
+          "title": "Payment schedule",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "unit": "Schedule unit CC-1409.",
+            "plan": "20 percent on booking and 80 percent on handover. Amounts follow the asking price. These are schedule figures, not payment instructions."
+          }
+        },
+        {
+          "id": "doc:status",
+          "title": "Simulated project status",
+          "banner": "SYNTHETIC DEMO",
+          "issuer_label": "NOT ISSUED BY DLD",
+          "sections": {
+            "status": "Construction status: stalled. Project id SYN-CC-001. This record was not issued by DLD and it is not a live check.",
+            "escrow": "Escrow account number is absent. Beneficiary reference is not confirmed."
+          }
+        },
+        {
+          "id": "doc:comparables",
+          "title": "Seeded comparables",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "rows": "SYN-C1 1760000 AED. SYN-C2 1890000 AED. SYN-C3 1820000 AED. All rows are synthetic Dubai sales for a progressing project."
+          },
+          "prices_aed": [1760000, 1890000, 1820000]
+        }
+      ]
+    },
+    {
+      "deal_id": "deal_creek_lane",
+      "tenant_id": "tenant_sandstone",
+      "brokerage": "Sandstone Realty",
+      "project": "Creek Lane",
+      "developer": "Harbor and Stone",
+      "jurisdiction": "Dubai",
+      "unit_id": "CL-0901",
+      "asking_price_aed": 2100000,
+      "buyer_question": "Buyer SYN-12 asked if unit CL-0901 can go to a manager.",
+      "documents": [
+        {
+          "id": "doc:brochure",
+          "title": "Brochure",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Creek Lane. Developer Harbor and Stone. Unit CL-0901. Dubai.",
+            "price": "Asking price 2100000 AED.",
+            "handover": "Handover December 2028.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE."
+          }
+        },
+        {
+          "id": "doc:spa",
+          "title": "SPA extract",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Creek Lane. Developer Harbor and Stone. Unit CL-0901.",
+            "handover": "Handover December 2028.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE."
+          }
+        },
+        {
+          "id": "doc:schedule",
+          "title": "Payment schedule",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "unit": "Schedule unit CL-0901.",
+            "plan": "10 percent on booking and the rest on handover. These are schedule figures, not payment instructions."
+          }
+        },
+        {
+          "id": "doc:status",
+          "title": "Simulated project status",
+          "banner": "SYNTHETIC DEMO",
+          "issuer_label": "NOT ISSUED BY DLD",
+          "sections": {
+            "status": "Construction status: progressing. Project id SYN-CL-014. This record was not issued by DLD and it is not a live check.",
+            "escrow": "Escrow reference is present on the simulated record and still to verify."
+          }
+        },
+        {
+          "id": "doc:comparables",
+          "title": "Seeded comparables",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "rows": "SYN-K1 2000000 AED. SYN-K2 2150000 AED. SYN-K3 2080000 AED."
+          },
+          "prices_aed": [2000000, 2150000, 2080000]
+        }
+      ]
+    },
+    {
+      "deal_id": "deal_palm_walk",
+      "tenant_id": "tenant_sandstone",
+      "brokerage": "Sandstone Realty",
+      "project": "Palm Walk",
+      "developer": "Harbor and Stone",
+      "jurisdiction": "Dubai",
+      "unit_id": "PW-18",
+      "asking_price_aed": 940000,
+      "buyer_question": "Buyer SYN-19 asked whether the Palm Walk price is fair.",
+      "documents": [
+        {
+          "id": "doc:brochure",
+          "title": "Brochure",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Palm Walk. Developer Harbor and Stone. Unit PW-18. Dubai.",
+            "price": "Asking price 940000 AED.",
+            "handover": "Handover March 2026.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE."
+          }
+        },
+        {
+          "id": "doc:spa",
+          "title": "SPA extract",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "identity": "Project Palm Walk. Developer Harbor and Stone. Unit PW-18.",
+            "handover": "Handover is conditional on a completion notice. No fixed date is stated.",
+            "beneficiary": "Beneficiary reference SYNTHETIC_ACCOUNT_NOT_PAYABLE_B."
+          }
+        },
+        {
+          "id": "doc:schedule",
+          "title": "Payment schedule",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "unit": "Schedule unit PW-19.",
+            "plan": "30 percent on booking. These are schedule figures, not payment instructions."
+          }
+        },
+        {
+          "id": "doc:status",
+          "title": "Simulated project status",
+          "banner": "SYNTHETIC DEMO",
+          "issuer_label": "NOT ISSUED BY DLD",
+          "sections": {
+            "status": "Construction status: stalled. Project id SYN-PW-003. This record was not issued by DLD and it is not a live check.",
+            "escrow": "Escrow account number is absent."
+          }
+        },
+        {
+          "id": "doc:comparables",
+          "title": "Seeded comparables",
+          "banner": "SYNTHETIC DEMO",
+          "sections": {
+            "rows": "SYN-P1 900000 AED. SYN-P2 980000 AED. SYN-P3 955000 AED. Rows are for a progressing project."
+          },
+          "prices_aed": [900000, 980000, 955000]
+        }
+      ]
+    },
+    {
+      "deal_id": "deal_other_broker",
+      "tenant_id": "tenant_other_broker",
+      "brokerage": "Other Broker",
+      "project": "Other House",
+      "developer": "Other Developer",
+      "jurisdiction": "Dubai",
+      "unit_id": "OH-1",
+      "asking_price_aed": 1000000,
+      "buyer_question": "Read this other brokerage file.",
+      "documents": []
+    }
+  ]
+}

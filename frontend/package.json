@@ -1,0 +1,21 @@
+{
+  "name": "readiness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 43231",
+    "build": "vite build",
+    "preview": "vite preview --port 43231"
+  },
+  "dependencies": {
+    "@fontsource/figtree": "5.2.8",
+    "@fontsource/literata": "5.2.8",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.2",
+    "vite": "5.4.10"
+  }
+}

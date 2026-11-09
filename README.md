@@ -1,220 +1,232 @@
-# D: UAE Real Estate Deal Readiness Agent Team
+# Readiness
 
-Project brief. Research checked on 7 November 2026, Asia/Dubai (UTC+4). Status: planning only. No application has been built or deployed.
+Interview demo for DataRobot. Readiness is a desk for one fictional Dubai brokerage, Sandstone Realty. The brokerage reads synthetic off plan files before anyone calls a price fair. The coordinator decides whether the report may be accepted for the file.
 
-## Business problem and UAE context
+The desk does not pay a buyer, send a message, certify escrow, or claim a live DLD check. All data is synthetic. The signed in tenant is `tenant_sandstone`.
 
-A brokerage must reconcile sales promises, SPA clauses and official project evidence before answering buyers. New brokers also need to learn which claims require verification rather than repeating a brochure. A cited deal readiness workflow is a concrete business use for document learning, Q&A and quizzes.
+## Quick start
 
-Start with Dubai only. DLD's Dubai REST service describes access to off plan project completion information, project photos, escrow account numbers and developer and broker information [R1]. The official Project Status Enquiry points users to Project Status (Mashrooi) in Dubai REST [R2]. RERA ecard verification enables customers to verify the card issued to real estate practitioners in Dubai [R3]. These are official verification channels, not evidence that a particular synthetic project or transaction is registered.
+    docker compose up --build
 
-The demo should ask whether project identity, developer, escrow instructions and broker status have supporting evidence. It must never claim a live DLD check occurred when it only read a seeded document. No automated DLD API access is assumed. Access rights, current legal requirements, escrow obligations and transaction specific documentation are “to verify” with the official service and qualified counsel before production.
+* Frontend: http://127.0.0.1:43231
+* Backend: http://127.0.0.1:54231
+* Sign in: `coordinator` / `demo`
 
-Emaar, Modon and Aldar are examples of developer document families that a future customer might use, not partners or endorsed data providers. Developer branding does not determine jurisdiction. DLD and RERA rules are Dubai specific. Abu Dhabi projects require a separately reviewed regulatory pack before supporting Modon or Aldar transactions there. Do not apply Dubai checklists across the UAE.
+Sign in opens the desk on Canal Courtyard. The assignment explanation is at `/explain`, and the desk links to it.
 
-## Why this needs a team of agents
+Without Docker, from the repo root:
 
-A buyer's due diligence covers separate areas that need different evidence: the permit and broker status, the price, the full cost of ownership, and off plan delivery risk. A single agent tends to answer each question in isolation and miss conflicts between them, for example a price that looks fair for a project that has stalled. Parallel specialists each own one area, a Critic looks specifically for contradictions across their findings, and a human approver decides before any offer or summary reaches a buyer.
+    uvicorn backend.app:app --port 54231
+    cd frontend && npm run dev
 
-The design extends the Planner, Operator and Checker pattern already used in Hermes and in the DataRobot Demo: the planner assigns the specialists, the specialists operate, and the Critic is the checker. The UAE Tax and eInvoicing team is the recommended primary demo. This team is the secondary option.
+## What you click
 
-## Agent team
+1. Open **Canal Courtyard** (unit CC-1408). Read the deal. The critic blocks a fair price because the simulated status says construction has stalled, and the writer cites the seeded documents.
+2. Approve accepts that report for the file. Escalate records the case for the pod lead. Send it back returns it to the coordinator. Nothing is sent to a buyer.
+3. **Creek Lane** (unit CL-0901) is a progressing file inside its comparables, and the report calls that price fair. **Palm Walk** (unit PW-18) is stalled, and the report does not.
+4. **Check an Abu Dhabi sale** still reads the open Dubai file, and a jurisdiction reviewer says this Dubai checklist does not validate an Abu Dhabi Aldar sale. No Abu Dhabi pack is loaded.
+5. A file for Other Broker is refused as `cross_tenant` and written to the audit. The desk does not list that file.
 
-| Agent | Role | Inputs | Outputs | Tools |
-|---|---|---|---|---|
-| Planner | Builds the due diligence checklist and assigns specialists | Deal file, project and unit IDs | Work items per specialist, run state, SSE progress events | LangGraph state, audit log |
-| Permit Verifier | Checks the listing, project, developer and broker against DLD and RERA evidence | Brochure, SPA extract, simulated official verification records | Verified, mismatch or "to verify" per item, with citations | Versioned retrieval, deterministic ID comparison, manual links to official services |
-| Valuation Analyst | Prices the unit against DLD transaction comparables | Unit details, synthetic comparable transactions | Price range with the comparables used | Deterministic comparison over a seeded synthetic comparables table |
-| Cost Modeller | Works out DLD fee, agency fee, mortgage and payment plan | Price, payment schedule, financing assumptions | Itemised cost schedule with stated assumptions | Deterministic arithmetic, reviewer approved fee assumptions |
-| Off plan Risk Analyst | Assesses project status and escrow position | Project status record, escrow details, SPA handover clause | Delivery and escrow risk notes with citations | Versioned retrieval, beneficiary reference comparison |
-| Critic | Looks for conflicts between the specialists' findings | All specialist outputs | Conflicts raised, sent back for one repair or escalated | Independent model call, cross finding rules |
-| Deal Writer | Drafts the offer or deal readiness summary | Critic approved findings | Draft summary with every claim cited | Template, citation checker |
-| Human approver | Manager or conveyancing professional who decides | Draft, conflicts, open questions | Approve, reject or escalate, recorded in the audit trail | Approval UI |
+The files are the seeded deals in `data/deals.json`. There is no control that creates a new deal. The chosen model is kept in this browser. A refresh restores it when the gateway still lists it.
 
-### Orchestration flow and handoffs
+Token counts in the log come from the OmniRoute response. They are not simulated. A template run shows no token count.
 
-1. The Planner builds the checklist and dispatches the four specialists in parallel.
-2. The Permit Verifier, Valuation Analyst, Cost Modeller and Off plan Risk Analyst each return cited findings.
-3. The Critic compares the findings. A conflict goes back to the relevant specialist for one repair, then escalates if unresolved.
-4. The Deal Writer drafts only from findings the Critic has passed, carrying open conflicts forward as explicit warnings.
-5. The Human approver decides. Nothing is sent to a buyer in the demo, and nothing leaves the system without approval.
+## How this meets the assignment
 
-```mermaid
-flowchart TD
-    Deal[Synthetic deal file] --> Plan[Planner]
-    Plan --> PV[Permit Verifier DLD and RERA]
-    Plan --> VA[Valuation Analyst DLD comps]
-    Plan --> CM[Cost Modeller fees mortgage payment plan]
-    Plan --> OR[Off plan Risk Analyst status and escrow]
-    PV --> Critic[Critic cross checks findings]
-    VA --> Critic
-    CM --> Critic
-    OR --> Critic
-    Critic -->|Conflict, one repair| Plan
-    Critic -->|Unresolved| Esc[Escalate as to verify]
-    Critic -->|Consistent| DW[Deal Writer]
-    Esc --> DW
-    DW --> Gate{Human approver}
-    Gate -->|Approve| Out[Approved summary, nothing sent to buyer in demo]
-    Gate -->|Reject or escalate| Log[(Decision audit)]
-    Out --> Log
-```
+The brief asks for a problem, a code first agent with a frontend and a backend, and a short talk: the problem, the solution, a live demo, the challenges, and how you would productize it for a DataRobot customer.
 
-### Scripted demo moment: one agent catches another
+### The problem
 
-The Valuation Analyst reports that the synthetic Canal Courtyard unit is priced within the range of seeded comparables. Independently, the Off plan Risk Analyst finds that the simulated project status record shows construction has stalled. Each finding looks reasonable alone. The Critic flags the conflict: comparables for a progressing project do not support a fair price for a stalled one. The Deal Writer is blocked from calling the price fair, and the conflict goes to the human approver as a named warning.
+The category is Dubai off plan deal readiness. Sandstone Realty has to reconcile a brochure, an SPA extract, a payment schedule, and a simulated project status before anyone calls a price fair. A price inside the comparables can still be the wrong answer when construction has stalled. A Dubai checklist is the wrong pack for an Abu Dhabi Aldar sale.
 
-### Rubric mapping
+### The solution
 
-| Criterion | How the team design addresses it |
-|---|---|
-| Problem Solving Acumen | Due diligence decomposed into independent areas, each owned by a specialist with its own evidence |
-| Strategic Vision | Brokerage workflow that can extend to more jurisdictions through separately reviewed regulatory packs |
-| Technical Credibility | Functional parallel multi agent workflow, deterministic checks, Critic loop, human gate and audit trail |
-| Creativity and Passion | Visible moment where the Critic catches a conflict no single specialist could see |
+The app is React and FastAPI, with a code first LangGraph loop: plan, specialists, critic, one repair, then the deal writer. LangGraph keeps that path testable. The writer asks OmniRoute for the prose when a model is selected. The critic and the price flag stay in code. The agent never pays a buyer and never queries DLD.
 
-## Target users and business value
+### The live demo
 
-Primary users are Dubai brokerage team leads, transaction coordinators and new brokers. A qualified manager or conveyancing professional approves deal summaries. Clients receive only a reviewed export, never an unapproved agent response.
+Open Canal Courtyard. Read the deal. You should see the beneficiary mismatch, the unit mismatch, the stalled status, and a report that does not call the price fair. Then approve it. Then check an Abu Dhabi sale and read the jurisdiction line. Then open Creek Lane, where the report does call the price fair.
 
-Value hypotheses are faster evidence assembly, fewer inconsistent answers, clearer handover to legal review and shorter onboarding. The product is not a property valuation engine, title verification service or investment recommendation tool. No return on investment, legal sufficiency or guaranteed completion is promised.
+### Challenges and learnings
 
-## Live demo storyline: 6 minutes
+A stalled file inside the comparables must not be called fair, even when the model says it is. A request for another brokerage is refused and audited. An Abu Dhabi question is answered by a reviewer and does not become a Dubai approval. The reply comes from the model through OmniRoute when that model can answer on chat completions, and the log shows that call's token count. The build is a working prototype, not a production system. Arabic and a training quiz are out of this slice.
 
-1. Minute 0 to 1: choose fictional Dubai brokerage Sandstone Realty and synthetic project Canal Courtyard. Show that the project, developer, unit and deal are invented, and introduce the agent team on screen. A synthetic buyer question arrives through the Omni messaging harness.
-2. Minute 1 to 2: upload a synthetic brochure, SPA extract, payment schedule and clearly labelled simulated official verification record. The Planner builds a checklist and dispatches the four specialists in parallel, visible in the SSE trace.
-3. Minute 2 to 3: the Off plan Risk Analyst finds the brochure promises one handover date while the SPA states a conditional date. Both citations are shown and the conflict is escalated instead of resolved by invention.
-4. Minute 3 to 4: the Valuation Analyst calls the price fair against comparables, while the project status record shows a stall. The Critic flags the conflict and blocks the Deal Writer from calling the price fair. The Permit Verifier also spots different beneficiary references between two synthetic documents and recommends official verification. No agent can approve a payment or certify escrow validity.
-5. Minute 4 to 5: ask in Arabic whether a Dubai checklist can validate an Abu Dhabi Aldar transaction. The guard refuses jurisdictional overreach and explains the missing source pack. Show a manual link to the official verification service without claiming it was queried.
-6. Minute 5 to 6: the Deal Writer produces a draft with warnings, and a manager approves a limited missing evidence report. A new broker answers three cited quiz questions and sees the clause behind a wrong answer. The approved response is captured in the Omni harness with its audit link. No message is sent to a buyer.
+### The vision
 
-## MVP versus later
+A DataRobot customer in a Dubai brokerage has this review every time a file is ready for an offer. Productize the loop as a governed template: one brokerage, seeded documents with citations, a critic that blocks a false fair price, a human decision, and an audit. A second emirate is a new pack, reviewed on its own. Scale the template. Do not skip the person.
 
-MVP covers one Dubai synthetic off plan deal, PDF and text ingestion, cited bilingual Q&A, clause extraction, deterministic identity and schedule consistency checks, missing evidence flags, human approval and a short training quiz. A checklist item is a product review control unless an authoritative legal source establishes it as mandatory.
+## Code first
 
-Later add an independently reviewed Abu Dhabi pack, lawful developer document connectors, authenticated official verification integrations if available, role based training, richer comparison across SPA versions and optional audio summaries. Do not include conveyancing, investment scoring, live inventory, bookings, deposits, AML certification, contract signing or actual DLD submissions in the MVP.
+The agent is a Python program. LangGraph compiles the nodes in `agent/runner.py`. The state they share is the typed `DealState` in that file: tenant, deal, question, findings, critic, draft, and whether the planner refused. Tests call the same functions.
 
-## Synthetic data plan
+1. **Start.** Read the deal calls `run_deal` in `agent/runner.py` with Sandstone Realty, the open file, and the selected model.
+2. **Planner.** Checks the request is still inside Sandstone Realty. A cross tenant file stops here. An Abu Dhabi, Aldar, or Modon question adds the jurisdiction reviewer.
+3. **Specialists.** Permit, valuation, cost, and off plan risk read the seeded documents in code. The jurisdiction reviewer, when assigned, states that this Dubai checklist does not validate an Abu Dhabi Aldar sale.
+4. **Critic.** Raises stalled price, handover dates, beneficiary mismatch, and unit id when the documents disagree. One repair reads the same documents again and invents no date or price.
+5. **Deal writer.** Uses the template, or asks OmniRoute. A blocked price cannot be called fair. An Abu Dhabi sale cannot be marked validated. The log records the model id and the token count from the response.
+6. **End.** The run returns the draft. Approve, Send it back, or Escalate is a person, after the graph has finished.
 
-Create a fictional brochure, SPA extract, payment schedule, internal brokerage checklist and simulated verification result. Seed conflicting handover wording, mismatched unit IDs, missing verification dates and inconsistent beneficiary references. Include an Arabic question set and a jurisdiction trap. Do not use actual buyers, Emirates IDs, passports, title deeds, signatures or bank accounts. Use explicitly invalid tokens such as SYNTHETIC_ACCOUNT_NOT_PAYABLE.
+## Who this serves
 
-Every generated page must say SYNTHETIC DEMO. The simulated official record must also say NOT ISSUED BY DLD and avoid official seals. Keep approved public regulatory references in a separate corpus with URLs and retrieval dates. Use no developer marketing claims without an actual versioned source; the initial brochure is fictional and must not bear a real developer logo.
+Readiness serves the brokerage staff who have to decide whether a synthetic file is ready for an offer. Buyers are the subject of the question. They are not the audience of the report.
 
-## Evals and success metrics
+### Transaction coordinator
 
-Proposed targets, not achieved results: detect all seeded identity and payment schedule discrepancies in 15 deterministic tests; abstain on all 10 missing official verification cases; block all 10 cross tenant attempts; escalate all 5 jurisdiction traps and all known source conflicts. Every material claim must point to an entailing source, not just a nearby chunk.
+Who. The person signed in on this desk. They are the only user of the product.
 
-A domain reviewer assesses a fixed 30 question synthetic benchmark. Target at least 90% accepted answers and review five Arabic answers for meaning and RTL readability. Record false reassurance explicitly as a critical failure. Measure source retrieval recall, missing item precision, review minutes, live latency and actual model usage. Quiz improvement is an onboarding signal only, not proof that a broker is licensed or qualified.
+How. They pick a file, choose a model, watch the agent plan and the specialists report, then Approve, Send it back, or Escalate. The log shows each step while the run is still going.
 
-## Real estate specific risks
+### Manager
 
-Marketing copy is not an official project status check or a substitute for the executed agreement. A simulated record never establishes legal title, completion progress, valid escrow or a licensed practitioner. Expired verification evidence triggers a visible warning. Keep source authority, jurisdiction and date distinct. Route contract interpretation to legal review and beneficiary discrepancies to a human; do not supply payment instructions or suggest that a flagged deal is fraud without evidence.
+Who. The person who accepts a report for the file. In this demo the decision is stored as `manager:demo`.
 
-## Official real estate source register
+How. Approve stores the report and says it is accepted for this file. Nothing is sent to a buyer, and no payment is approved.
 
-[R1] DLD Dubai REST, published capabilities including project information, escrow information and broker details: https://dubailand.gov.ae/en/eservices/dubai-rest/
+### Pod lead
 
-[R2] DLD Project Status Enquiry, Mashrooi verification route: https://dubailand.gov.ae/en/eservices/real-estate-project-status-landing/real-estate-project-status
+Who. The coordinator's lead, when a case should not be closed on the desk.
 
-[R3] DLD RERA ecard verification, service scope and procedure: https://backoffice.dubailand.gov.ae/en/eservices/validate-e-card-overview/
+How. Escalate records the case for the pod lead. It does not send a message, and it does not contact a buyer.
 
-[R4] DLD How do I, project status guidance: https://dubailand.gov.ae/en/how-do-i/
+### Buyer
 
-## Architecture and implementation
+Who. A fictional person named on the file, such as buyer SYN-12 on Creek Lane or buyer SYN-19 on Palm Walk. They are a row in the question, not a user of Readiness.
 
-This is a proposed application, not a working product yet. Build code first with a FastAPI backend, React and Vite frontend, and a LangGraph workflow. Use SSE to expose actual agent progress. Every run carries a tenant ID, source versions, tool results, approval state and an audit trail.
+How. They do not sign in. This desk never sends them the report and never pays a unit.
 
-```mermaid
-flowchart TD
-    Chat[Synthetic messaging harness] --> Omni[Omni channel layer]
-    Omni --> Adapter[Authenticated tenant scoped FastAPI adapter]
-    Adapter --> API
-    UI[Arabic and English React UI] --> API[FastAPI and SSE]
-    API --> Guard[Scope tenant and jurisdiction guard]
-    Guard --> Ingest[Parse uploads and quarantine instructions]
-    Ingest --> Store[(SQLite documents chunks graph and audit)]
-    Store --> Plan[Planner: LangGraph]
-    Plan --> PV[Permit Verifier]
-    Plan --> VA[Valuation Analyst]
-    Plan --> CM[Cost Modeller]
-    Plan --> OR[Off plan Risk Analyst]
-    PV --> Critic[Critic validates claims citations and cross finding conflicts]
-    VA --> Critic
-    CM --> Critic
-    OR --> Critic
-    Critic -->|Repair once| Plan
-    Critic -->|Unsupported or conflict| Escalate[Abstain and request expert review]
-    Critic -->|Evidence sufficient| DW[Deal Writer]
-    Escalate --> DW
-    DW --> Human[Human review checkpoint]
-    Human -->|Approve| Report[Save approved report and quiz]
-    Human -->|Reject| Audit[(Decision audit)]
-    Human -->|Escalate| Audit
-    Report --> Audit
-    Report --> UI
-    Report --> Preview[Approved response preview, captured locally, not delivered]
-    Preview --> Omni
-```
+### Another brokerage
 
-Each agent is a LangGraph node with its own prompt, allowed tools and output schema. The Planner plans, the four specialists and the Deal Writer operate, and the Critic is the checker.
+Who. A second customer on the same platform. This desk is Sandstone Realty only. Other Broker owns the file `deal_other_broker`.
 
-The checker must validate source entailment, not merely the presence of a citation. A second model alone is not proof. Numeric comparisons and required field checks run as deterministic code. Bound repair to one attempt, then abstain. Uploads are untrusted data and cannot grant tools or override system instructions. Approval requires a completed run whose checker passed and whose document version has not changed. Reject cross tenant access before retrieval.
+How. Their file stays in their own tenant. A request from this desk to read it is refused and written to the audit.
 
-Use OmniRoute chat completions at `http://127.0.0.1:20128/v1`, with `gh/gpt-5.6-terra` as the primary model and `gh/gpt-5.6-luna` as a controlled fallback. Record the actual selected model and retry reason. `ollama/qwen3-coder:30b` is a local option whose Arabic and domain quality must be evaluated. Routing locally does not establish where an upstream provider processes data. Do not change Hermes or OmniRoute configuration.
+## The path
 
-### Requirements: Omni messaging channel layer
+Buyers exist only as names on the question. The report is for the coordinator and the manager. A Dubai checklist does not validate an Abu Dhabi sale.
 
-[Omni](https://github.com/automagik-dev/omni) is a required integration component for the planned messaging experience. It does not replace the LangGraph agent team or the OmniRoute model gateway. Omni is an Apache 2.0 licensed TypeScript omnichannel messaging platform for AI agents, built on Bun, Hono, PostgreSQL with Drizzle and NATS JetStream, with a REST and OpenAPI interface, a CLI and SDKs. It provides a unified messaging API, event routing, agent provider bindings and response gates. Its documented channels include WhatsApp through Baileys or Meta Cloud API, Discord, Slack and Telegram.
+### File
 
-How this project uses it: connect Omni to a dedicated FastAPI adapter through its webhook agent provider interface. Map each incoming conversation to an authenticated tenant and deal before invoking the Planner. Return only human approved output through the adapter. Preserve message IDs, run IDs, source versions and approval decisions for audit and duplicate delivery protection. Specialist agents never send messages directly.
+The seeded documents are the brochure, the SPA extract, the payment schedule, the simulated project status, and the comparables. Every document says SYNTHETIC DEMO. The status record says NOT ISSUED BY DLD.
 
-For the demo, replay synthetic conversations through a local testing channel or fixtures. Show an incoming fictional buyer question, the specialist handoffs, the Critic's warning and the Human approver's decision. Capture the proposed response locally without sending it to a buyer. Activating a production channel or any external delivery needs separate approval.
+### Specialists
 
-Runtime requirements are Bun, PM2, PostgreSQL and NATS JetStream. Omni's documented installer manages local PostgreSQL and NATS and exposes its API on port 8882 by default. Keep Omni's PostgreSQL and messaging state separate from the application's SQLite document and audit storage. Use scoped API keys, authenticated webhooks, explicit tenant mapping and protected local service endpoints. This requirement does not authorise installing Omni or changing Hermes or OmniRoute.
+Permit compares beneficiary references and the schedule unit. Valuation places the asking price against the seeded comparables. Cost lists the asking price, a 4 percent DLD fee assumption, and a 2 percent agency fee assumption, each marked to verify. Off plan risk reads the stalled or progressing status and the handover wording.
 
-Maturity and licence: checked on 8 November 2026, Asia/Dubai, GitHub reported 60 stars, 20 forks, default branch `dev` and latest release v2.261108.2. The README version badge lags the releases, so pin a reviewed release and validate its channel and webhook contracts before implementation. Upstream channel status labels are not production assurance. Preserve Apache 2.0 licence and notice obligations and review transitive dependencies.
+### Critic
 
-Channel and privacy risks: prefer Meta Cloud API for any future approved WhatsApp deployment, subject to Meta business, consent, template and messaging policies. Baileys pairing is not official WhatsApp Business API authorisation and needs a separate terms and account risk review. Chats, contact identifiers, attachments, message logs and cross channel identity links can contain personal data. Apply the UAE PDPL controls in this brief to Omni storage and every channel provider, including processing location, retention, access and deletion. Use synthetic messages and fictional identifiers only in the demo.
+Canal Courtyard and Palm Walk are inside a progressing comparable range and the status says stalled, so the price is not fair. Creek Lane is progressing and the report calls the price fair. Handover, beneficiary, and unit conflicts stay as warnings.
 
-### Reuse from DataRobot Demo
+### Readiness
 
-Read `/home/abdul/projects/DataRobot-Demo` only as a reference. Reuse its patterns for FastAPI, SSE, LangGraph planner/operator/checker, SQLite GraphRAG, approval decisions, evals and Docker Compose in these new projects after explicit build approval. The existing README confirms these components and its security tooling. Keep ports and storage separate. Optional LightRAG on Ollama comes later only if retrieval evals justify it.
+The coordinator opens the file. The agent plans, the specialists report, the critic checks, and the writer drafts through OmniRoute or the template. Official links for Dubai REST, project status, and RERA ecard verification are manual links only. This desk does not query them.
 
-Reuse Gitleaks, TruffleHog, Trivy and Semgrep for this project's own code and containers. Secret verification stays off. Prowler requires separate opt in and approved credentials. Do not copy old security findings into business data or inherit old simulated metrics. `/home/abdul/projects/DataRobot-V2` and its OpenRig builder/reviewer team can support implementation later. No agents have been assigned by this brief.
+### Decision
 
-### Application contract
+Approve accepts the report for the file. Send it back returns it to the coordinator. Escalate records it for the pod lead. Nothing is sent.
 
-Proposed routes are `POST /api/documents`, `POST /api/runs`, `GET /api/runs/{id}/events`, `POST /api/runs/{id}/decisions`, and `GET /api/reports/{id}`. Store tenant, document hash, page, source URL, retrieval date, effective date, rule version, model, checker outcome and approval actor. Cite document IDs and exact pages or sections in the UI. Unknown dates display “to verify”. Arabic uses RTL layout with explicit LTR treatment for amounts and identifiers.
+### Jurisdiction
 
-## Privacy, security and legal controls
+Check an Abu Dhabi sale asks whether this Dubai checklist can validate an Abu Dhabi Aldar sale. The reviewer answers that it cannot. No Abu Dhabi pack is loaded, and no official service is queried. The open Dubai file is still read.
 
-Use only synthetic business documents with visibly fake identifiers. No real client records, PII, credentials, bank details or production documents. Public regulatory material is reference evidence, not a synthetic customer document. Store approved extracts with provenance and respect source terms. Do not scrape authenticated services.
+### Tenant wall
 
-This is an assistant for qualified human review, not tax, legal, investment or regulatory advice. Never label a business or transaction compliant just because a checklist passes. Display missing evidence and scope limitations prominently.
+No run reads another brokerage's file. A cross tenant request is refused and written to the audit.
 
-The UAE PDPL governs personal data processing and includes conditions for transfers abroad [P1, P2]. It is not a blanket rule that all data must stay in the UAE. For a production customer, map applicable federal, sector and free zone obligations with counsel. Select UAE hosted storage, inference, backups and logs where required by policy or law. Verify every provider's actual processing location and retention terms. A localhost OmniRoute URL does not guarantee UAE residency. Until that verification, permit only synthetic content to remote models. Design access controls, encryption, retention, deletion, audit access and incident handling before accepting real data.
+## The tools
 
-## DataRobot productization vision
+The tools this running desk uses, what each one does here, and why it is in the stack.
 
-Position this as a repeatable customer solution with a reusable agent core and versioned jurisdiction packs. A DataRobot customer could evaluate model choices, monitor agent quality and latency, govern releases and connect an approved agent service to its enterprise applications. Confirm the customer's DataRobot edition, supported integrations and UAE deployment options before promising features or residency.
+### React
 
-Move from SQLite to managed production storage only when scale and tenancy requirements justify it. Add SSO, scoped roles, isolated retrieval, customer managed source approvals, model regression gates, observability and policy version rollback. Charge against validated workflow value rather than promising generic productivity gains. Start with a supervised pilot, measure baseline review effort, then compare expert accepted output and total review time. No claimed savings are measured yet.
+How. The sign in and the coordinator desk are React 18 components.
 
-## Interview delivery
+Why. The assignment asks for a complete application a person can use, not a script that only prints a report.
 
-Allocate the 15 minute presentation as follows: problem and customer value 2 minutes, architecture and tools 3 minutes, live demo 6 minutes, challenges and learnings 2 minutes, and product vision 2 minutes. Demonstrate a refusal or escalation as well as a successful case. Keep a clearly labelled synthetic replay ready if model access fails, and do not present replay timings as live measurements.
+### Vite
 
-## Next steps
+How. Vite builds the React app and serves it on port 43231 during development. In development the page calls the API through the Vite proxy.
 
-1. Confirm this brief and the narrow MVP before coding.
-2. Freeze official source versions and have the domain reviewer approve rule interpretations.
-3. Author synthetic fixtures and expected results before implementing the graph.
-4. Build one complete vertical slice with frontend, backend, citations and approval.
-5. Add Arabic review, adversarial evals and container restart persistence checks.
-6. Run a timed rehearsal and disclose remaining limitations.
+Why. The desk has to build cleanly into a static bundle the container can host.
 
-## Shared official privacy sources
+### serve
 
-[P1] UAE government, Data protection laws: https://u.ae/en/about-the-uae/digital-uae/data/data-protection-laws
+How. The frontend image uses the serve package to host the built files on port 43231.
 
-[P2] Federal Decree by Law No. 45 of 2021, especially Articles 22 and 23: https://uaelegislation.gov.ae/en/legislations/1972/download
+Why. The demo should open in a browser from one Compose stack, with no extra web server to install.
+
+### Figtree and Literata
+
+How. Fontsource ships Figtree for the interface and Literata for the titles.
+
+Why. The type stays inside the bundle, so the desk does not depend on a font service. The room stays paper and oxblood, separate from the Casework desk.
+
+### FastAPI
+
+How. FastAPI serves the session, the deal files, the model list, the run, the scope check, the decision, and the audit.
+
+Why. The agent needs one backend the desk can call, with the tenant bound on the server.
+
+### Uvicorn
+
+How. Uvicorn runs the FastAPI app on port 54231.
+
+Why. The API has to stay up as its own process beside the frontend.
+
+### Pydantic
+
+How. FastAPI uses Pydantic to read JSON bodies before a route runs.
+
+Why. A bad payload should fail at the door instead of halfway through a run.
+
+### LangGraph
+
+How. The readiness run is a LangGraph graph: planner, specialists, critic, one repair, and the deal writer.
+
+Why. The assignment asks for a code first agent. A fixed graph keeps that loop testable and visible on the desk.
+
+### LangChain Core
+
+How. LangGraph is pinned beside LangChain Core. The deal writer calls the gateway with the standard library. It does not build the prompt through LangChain.
+
+Why. The graph runtime needs that library to compile and invoke the nodes.
+
+### sse-starlette
+
+How. After Read the deal, the desk opens a Server Sent Events stream at `/runs/{id}/events` and paints each step as it is recorded. The run returns an id first, so the log fills while the model call is still going.
+
+Why. The coordinator should see the plan, the findings, the critic, and the writer, not one silent wait.
+
+### SQLite
+
+How. SQLite holds the audit log and human decisions under `backend/var`.
+
+Why. One file is enough for the demo, and every row stays with its tenant. There is no separate database to operate.
+
+### Docker Compose
+
+How. Compose builds and runs the frontend on port 43231 and the backend on port 54231. The backend reaches OmniRoute on the host through `host.docker.internal`.
+
+Why. The interview demo should start as one stack.
+
+### OmniRoute
+
+How. The writer calls the local OmniRoute gateway at `http://127.0.0.1:20128/v1/chat/completions`. The picker defaults to `auto/chat`. The template stays available when the gateway is down. `gh/gpt-5.6-terra` and `gh/gpt-5.6-luna` are not on this gateway. `gh/gpt-6.1-terra` and `gh/gpt-6.1-sol` are listed and refused on chat completions, so the picker does not offer them. The log shows the model name and the token count from the response. This repo does not change OmniRoute.
+
+Why. The report has to be written by a model when one is selected. OmniRoute is the gateway already running here, so the agent does not keep provider keys of its own.
+
+### pytest
+
+How. pytest runs the Canal Courtyard critic, the scope refusals, the model guard, the decision API, and the page contract.
+
+Why. The guard and the story have to stay true when the desk changes.
+
+## Checks
+
+    make test
+    cd frontend && npm run build
+
+`make test` runs the pytest suite in `tests/`. The page contract checks the desk source. It does not open a browser.
+
+Storage is SQLite. There is no Postgres. `backend/var/` is gitignored. The running desk does not use LightRAG or the security scanners.
+
+The same brief lives in this file. The Casework reference is [the DataRobot Demo README](../DataRobot-Demo/README.md).
