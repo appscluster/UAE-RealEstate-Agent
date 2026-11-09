@@ -19,6 +19,38 @@ Without Docker, from the repo root:
     uvicorn backend.app:app --port 54231
     cd frontend && npm run dev
 
+## The desk
+
+The shots below follow the click path. The model picker is on `template`, so the report stays the same when OmniRoute is down.
+
+Sign in as `coordinator` / `demo`.
+
+![Sign in for Sandstone Realty](docs/screenshots/sign-in.png)
+
+Canal Courtyard opens with the seeded papers. The simulated status says construction has stalled.
+
+![Canal Courtyard file on the desk](docs/screenshots/canal-courtyard.png)
+
+Read the deal. The critic blocks a fair price, and the writer cites the seeded documents.
+
+![Canal Courtyard report that does not call the price fair](docs/screenshots/canal-courtyard-report.png)
+
+Approve accepts that report for the file. Nothing is sent to a buyer.
+
+![Canal Courtyard report accepted for the file](docs/screenshots/canal-courtyard-approved.png)
+
+Creek Lane is a progressing file inside its comparables. The report calls that price fair.
+
+![Creek Lane report that calls the price fair](docs/screenshots/creek-lane-report.png)
+
+Check an Abu Dhabi sale still reads the open Dubai file. The jurisdiction reviewer says this Dubai checklist does not validate an Abu Dhabi Aldar sale.
+
+![Abu Dhabi check on the open Creek Lane file](docs/screenshots/abu-dhabi-check.png)
+
+The assignment page is at `/explain`.
+
+![Assignment explanation](docs/screenshots/explain.png)
+
 ## What you click
 
 1. Open **Canal Courtyard** (unit CC-1408). Read the deal. The critic blocks a fair price because the simulated status says construction has stalled, and the writer cites the seeded documents.
@@ -228,5 +260,3 @@ Why. The guard and the story have to stay true when the desk changes.
 `make test` runs the pytest suite in `tests/`. The page contract checks the desk source. It does not open a browser.
 
 Storage is SQLite. There is no Postgres. `backend/var/` is gitignored. The running desk does not use LightRAG or the security scanners.
-
-The same brief lives in this file. The Casework reference is [the DataRobot Demo README](../DataRobot-Demo/README.md).
